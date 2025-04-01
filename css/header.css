@@ -1,0 +1,137 @@
+.header{
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+    align-items: center;
+    justify-content: space-between;
+    height: 80px;
+}
+
+.nav{
+    display: flex;
+    flex-direction: row;
+    text-decoration-style: none;
+    margin-right: 20px;
+}
+
+.title{
+    font-size: 15px;
+}
+
+.nav img{
+    width: 100%;
+}
+
+.nav button{
+    width: 50px;
+    height: 50px;
+    padding: 10px;
+    border: none;
+    border-radius: 50%;
+    background: none;
+    object-fit: contain;
+}
+
+
+
+.nav button:hover{
+    background-color: rgb(187, 187, 187);
+}
+
+.title{
+    margin-left: 20px;
+}
+
+
+/* Settings Button */
+.settings-btn {
+    top: 20px;
+    right: 20px;
+    background: none;
+    border: none;
+    cursor: pointer;
+}
+
+.settings-btn img {
+    width: 30px;
+    height: 30px;
+}
+
+/* Sliding Side Menu */
+.side-menu {
+    z-index: 9999; /* Very high to overlay everything */
+    position: fixed;
+    top: 0;
+    right: -250px; /* Initially hidden */
+    width: 250px;
+    height: 100%;
+    background-color: #333;
+    color: white;
+    padding-top: 60px;
+    transition: right 0.3s ease-in-out;
+    box-shadow: -2px 0 5px rgba(0, 0, 0, 0.5); /* Optional shadow */
+}
+
+/* Ensure table is not above the menu */
+table {
+    position: relative; /* Makes sure it doesn't overlap */
+    z-index: -1;
+}
+
+.side-menu ul {
+    list-style: none;
+    padding: 0;
+}
+
+.side-menu ul li {
+    padding: 15px;
+    border-bottom: 1px solid #444;
+}
+
+.side-menu ul li a {
+    color: white;
+    text-decoration: none;
+    display: block;
+}
+
+.side-menu ul li a:hover {
+    background-color: #555;
+}
+
+/* Close Button */
+.close-btn {
+    position: absolute;
+    top: 10px;
+    right: 15px;
+    font-size: 24px;
+    background: none;
+    border: none;
+    color: white;
+    cursor: pointer;
+}
+
+/* Notification Dropdown */
+.notification-dropdown {
+    display: none;
+    position: absolute;
+    top: 60px; /* Adjust based on your header height */
+    right: 60px; /* Adjust position */
+    width: 250px;
+    background: white;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+    padding: 10px;
+    z-index: 9999;
+}
+
+.notification-dropdown p {
+    padding: 10px;
+    border-bottom: 1px solid #ddd;
+    margin: 0;
+    font-size: 14px;
+}
+
+/* Show dropdown when active */
+.notification-dropdown.show {
+    display: block;
+}
