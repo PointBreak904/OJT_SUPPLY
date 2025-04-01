@@ -61,7 +61,12 @@ if (isset($_POST['filePath'])) {
 
     <!-- Tables will be dynamically generated here -->
     <div class="table-container">
-        <div id="tables-container"></div>
+        <div id="tables-container"> 
+            <div id="loading-overlay">
+                <div class="loader"></div>
+                <p>Loading...</p>
+            </div>
+        </div>
     </div>
     <div id="buttons-container"></div> <!-- Filter buttons will be added here -->
 
@@ -247,22 +252,6 @@ if (isset($_POST['filePath'])) {
     });
 });
 
-// Function to load an Excel file given a file path (or server reference)
-function loadExcelFile(filePath) {
-    fetch(filePath)
-        .then(response => response.blob())
-        .then(blob => {
-            let reader = new FileReader();
-            reader.readAsBinaryString(blob);
-
-            reader.onload = function (e) {
-                const data = e.target.result;
-                displayExcelData(data);
-            };
-        })
-        .catch(error => console.error("Error loading file:", error));
-}
-
 // Function to display Excel data in tables
 function displayExcelData(data) {
     const workbook = XLSX.read(data, { type: 'binary' });
@@ -355,114 +344,109 @@ function displayExcelData(data) {
         });
 
         function loadExcelFile(filePath) {
-            fetch(filePath)
-                .then(response => response.blob())
-                .then(blob => {
-                    let reader = new FileReader();
-                    reader.readAsBinaryString(blob);
+            document.getElementById("loading-overlay").style.display = "block";
+            
+            fetch(`../phpConnection/read_excel.php?file=${encodeURIComponent(filePath)}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (!data.success) {
+                        console.error("Error loading file:", data.error);
+                        return;
+                    }
 
-                    reader.onload = function (e) {
-                        const data = e.target.result;
-                        const workbook = XLSX.read(data, { type: 'binary' });
+                    const tablesContainer = document.getElementById('tables-container');
+                    const buttonsContainer = document.getElementById('buttons-container');
+                    tablesContainer.innerHTML = "";
+                    buttonsContainer.innerHTML = "";
 
-                        const tablesContainer = document.getElementById('tables-container');
-                        const buttonsContainer = document.getElementById('buttons-container');
-                        tablesContainer.innerHTML = "";
-                        buttonsContainer.innerHTML = "";
+                    const currentYear = new Date().getFullYear();
+                    let closestYear = null;
+                    let closestYearIndex = null;
+                    let sheetYears = [];
+                    let hasYear = false;
 
-                        const currentYear = new Date().getFullYear();
-                        let closestYear = null;
-                        let closestYearIndex = null;
-                        let sheetYears = [];
-                        let hasYear = false;
+                    // Identify sheets with years and find the closest to the current year
+                    data.sheets.forEach((sheet, index) => {
+                        const yearMatch = sheet.sheetName.match(/(19|20)\d{2}/);
+                        if (yearMatch) {
+                            hasYear = true;
+                            let year = parseInt(yearMatch[0]);
+                            sheetYears.push({ year, index });
 
-                        // Identify all sheet names with years and find the closest to the current year
-                        workbook.SheetNames.forEach((sheetName, index) => {
-                            const yearMatch = sheetName.match(/(19|20)\d{2}/);
-                            if (yearMatch) {
-                                hasYear = true;
-                                let year = parseInt(yearMatch[0]);
-                                sheetYears.push({ year, index });
-
-                                if (year === currentYear) {
-                                    closestYear = year;
-                                    closestYearIndex = index;
-                                } else if (
-                                    closestYear === null || 
-                                    Math.abs(year - currentYear) < Math.abs(closestYear - currentYear) || 
-                                    (Math.abs(year - currentYear) === Math.abs(closestYear - currentYear) && year > closestYear)
-                                ) {
-                                    closestYear = year;
-                                    closestYearIndex = index;
-                                }
+                            if (year === currentYear) {
+                                closestYear = year;
+                                closestYearIndex = index;
+                            } else if (
+                                closestYear === null ||
+                                Math.abs(year - currentYear) < Math.abs(closestYear - currentYear) ||
+                                (Math.abs(year - currentYear) === Math.abs(closestYear - currentYear) && year > closestYear)
+                            ) {
+                                closestYear = year;
+                                closestYearIndex = index;
                             }
-                        });
-
-                        console.log("Detected Sheet Years:", sheetYears);
-
-                        // If no year is found, display the first sheet
-                        if (!hasYear) {
-                            closestYearIndex = 0;
                         }
+                    });
 
-                        // Display the selected sheet
-                        workbook.SheetNames.forEach((sheetName, index) => {
-                            const sheet = workbook.Sheets[sheetName];
-                            const jsonData = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+                    console.log("Detected Sheet Years:", sheetYears);
 
-                            if (jsonData.length === 0) return;
+                    if (!hasYear) {
+                        closestYearIndex = 0;
+                    }
 
-                            let section = document.createElement("div");
-                            section.id = "table-" + index;
-                            section.style.display = (index === closestYearIndex) ? "block" : "none";
+                    // Display each sheet
+                    data.sheets.forEach((sheet, index) => {
+                        let section = document.createElement("div");
+                        section.id = "table-" + index;
+                        section.style.display = (index === closestYearIndex) ? "block" : "none";
 
-                            let heading = document.createElement("h2");
-                            heading.textContent = sheetName;
+                        let heading = document.createElement("h2");
+                        heading.textContent = sheet.sheetName;
 
-                            let table = document.createElement("table");
-                            table.border = "1";
-                            let thead = document.createElement("thead");
-                            let tbody = document.createElement("tbody");
+                        let table = document.createElement("table");
+                        table.border = "1";
+                        let thead = document.createElement("thead");
+                        let tbody = document.createElement("tbody");
 
-                            let headerRow = document.createElement("tr");
-                            jsonData[0].forEach(header => {
-                                let th = document.createElement("th");
-                                th.textContent = header;
-                                headerRow.appendChild(th);
+                        sheet.data.forEach((row, rowIndex) => {
+                            let tr = document.createElement("tr");
+
+                            row.forEach(cell => {
+                                let cellElement = rowIndex === 0 ? document.createElement("th") : document.createElement("td");
+                                cellElement.textContent = cell.value || "";
+
+                                // Apply styles from backend
+                                if (cell.bold) cellElement.style.fontWeight = "bold";
+                                if (cell.italic) cellElement.style.fontStyle = "italic";
+                                if (cell.fontColor) cellElement.style.color = `#${cell.fontColor.substring(2)}`;
+                                if (cell.bgColor) cellElement.style.backgroundColor = `#${cell.bgColor.substring(2)}`;
+
+                                tr.appendChild(cellElement);
                             });
-                            thead.appendChild(headerRow);
-                            table.appendChild(thead);
 
-                            jsonData.slice(1).forEach(row => {
-                                let tr = document.createElement("tr");
-                                row.forEach(cell => {
-                                    let td = document.createElement("td");
-                                    td.textContent = cell || "";
-                                    tr.appendChild(td);
-                                });
-                                tbody.appendChild(tr);
-                            });
-
-                            table.appendChild(tbody);
-                            section.appendChild(heading);
-                            section.appendChild(table);
-                            tablesContainer.appendChild(section);
-
-                            let button = document.createElement("button");
-                            button.textContent = sheetName;
-                            button.addEventListener("click", function () {
-                                document.querySelectorAll(".table-container div[id^='table-']").forEach(div => {
-                                    div.style.display = "none";
-                                });
-                                document.getElementById("table-" + index).style.display = "block";
-                            });
-                            buttonsContainer.appendChild(button);
+                            rowIndex === 0 ? thead.appendChild(tr) : tbody.appendChild(tr);
                         });
 
-                        console.log("Automatically opened sheet: " + workbook.SheetNames[closestYearIndex]);
-                    };
+                        table.appendChild(thead);
+                        table.appendChild(tbody);
+                        section.appendChild(heading);
+                        section.appendChild(table);
+                        tablesContainer.appendChild(section);
+
+                        // Button for switching between sheets
+                        let button = document.createElement("button");
+                        button.textContent = sheet.sheetName;
+                        button.addEventListener("click", function () {
+                            document.querySelectorAll(".table-container div[id^='table-']").forEach(div => {
+                                div.style.display = "none";
+                            });
+                            document.getElementById("table-" + index).style.display = "block";
+                        });
+                        buttonsContainer.appendChild(button);
+                    });
+
+                    console.log("Automatically opened sheet: " + data.sheets[closestYearIndex].sheetName);
                 })
-                .catch(error => console.error("Error loading file:", error));
+                .catch(error => console.error("Error fetching Excel data:", error));
         }
 
 // Function to filter table data based on header

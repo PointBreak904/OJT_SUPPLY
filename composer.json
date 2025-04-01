@@ -1,0 +1,13 @@
+{
+    "name": "composer/pcre",
+    "description": "A PHP project using PhpSpreadsheet",
+    "require": {
+        "phpoffice/phpspreadsheet": "^4.1"
+    },
+    "license": "proprietary",
+    "autoload": {
+        "psr-4": {
+            "YourNamespace\\": "src/"
+        }
+    }
+}
