@@ -3,7 +3,7 @@ require '../vendor/autoload.php'; // Load PHPSpreadsheet
 
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
-                                                                                                                                                                                                                                        
+
 if (isset($_GET['file'])) {
     $filePath = "../drawables/file/" . basename($_GET['file']);
 
@@ -31,18 +31,29 @@ if (isset($_GET['file'])) {
 
                 $font = $style->getFont();
                 $fill = $style->getFill();
-
+                
+                // Prepare the data for the frontend (including styles)
                 $formattedRow[] = [
                     "value" => $cellValue,
-                    "bold" => $font->getBold(),
-                    "italic" => $font->getItalic(),
-                    "fontColor" => $font->getColor()->getARGB(),
-                    "bgColor" => ($fill->getFillType() === 'solid') ? $fill->getStartColor()->getARGB() : null
+                    "font" => [
+                        "bold" => $font->getBold(),
+                        "italic" => $font->getItalic(),
+                        "color" => $font->getColor()->getRGB(), // Get font color in RGB
+                        "size" => $font->getSize(),
+                    ],
+                    "fill" => [
+                        "bgColor" => ($fill->getFillType() === 'solid') ? $fill->getStartColor()->getRGB() : null
+                    ]
                 ];
             }
+
             $formattedData[] = $formattedRow;
         }
-        $sheetsData[] = ["sheetName" => $sheetName, "data" => $formattedData];
+
+        $sheetsData[] = [
+            "sheetName" => $sheetName,
+            "data" => $formattedData
+        ];
     }
 
     echo json_encode(["success" => true, "sheets" => $sheetsData]);

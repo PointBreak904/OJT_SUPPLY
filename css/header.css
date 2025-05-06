@@ -5,6 +5,10 @@
     align-items: center;
     justify-content: space-between;
     height: 80px;
+    background: rgba(0, 0, 0, 0.083);
+    position: fixed;
+    top: 0;
+    left: 0;
 }
 
 .nav{

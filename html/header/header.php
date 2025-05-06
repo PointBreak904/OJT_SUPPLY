@@ -13,6 +13,7 @@
             Supply
         </h1>
     </div>
+    
     <div class="nav">
         <button class="notification-btn" onclick="toggleNotification()">
             <img src="../../drawables/notification.png" alt="Notifications">
@@ -26,7 +27,6 @@
         </button>
     </div>
 
-
     <div class="side-menu" id="sideMenu">
     <button class="close-btn" onclick="toggleMenu()">×</button>
     <ul>
@@ -37,7 +37,6 @@
     </ul>
 </div>
 </header>
-
 
 <script>
     function toggleMenu() {
@@ -70,6 +69,5 @@
 
 
 </script>
-
 </body>
 </html>
